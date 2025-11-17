@@ -1,0 +1,2 @@
+# ShopifyThemeCheck
+Easy theme search

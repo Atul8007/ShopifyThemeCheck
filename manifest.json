@@ -1,0 +1,21 @@
+{
+  "manifest_version": 3,
+  "name": "Shopify Theme Detector",
+  "version": "1.0",
+  "description": "Quickly find the theme used on a Shopify store website.",
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "permissions": [
+    "activeTab",
+    "scripting"
+  ],
+  "host_permissions": [
+    "*://*/*"
+  ]
+}

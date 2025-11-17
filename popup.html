@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Shopify Theme Detector</title>
+  <style>
+    /* VARIABLES (Using the palette for readability) */
+    :root {
+      --color-primary: #95bf47;
+      --color-black: #000000;
+      --color-white: #ffffff;
+      --color-border: #000000; /* Use black for hard borders */
+    }
+
+    body {
+      width: 280px;
+      padding: 15px;
+      font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      font-size: 14px;
+      color: var(--color-black);
+      background-color: var(--color-white);
+      margin: 0;
+    }
+
+    h4 {
+      margin: 0 0 15px 0;
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--color-black);
+      border-bottom: 2px solid var(--color-primary); /* Green underline */
+      padding-bottom: 10px;
+    }
+
+    #theme-result { 
+      padding: 10px 0;
+      min-height: 40px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: flex-start;
+      line-height: 1.5;
+    }
+
+    /* States */
+    .loading { 
+      color: var(--color-black); 
+      opacity: 0.7;
+      font-style: italic;
+    }
+
+    .not-shopify { 
+      color: var(--color-black); 
+      font-weight: 500;
+      background-color: var(--color-white); 
+      border: 1px solid var(--color-black); /* Black border for distinction */
+      padding: 10px;
+      margin-top: 5px;
+      border-radius: 4px;
+      text-align: center;
+      width: 100%;
+    }
+
+    /* Theme Name Display */
+    .theme-name-display {
+        font-size: 16px;
+        font-weight: bold;
+        color: var(--color-primary); /* Highlight theme name in Green */
+        background-color: var(--color-black); /* Black background for high contrast */
+        padding: 5px 8px;
+        margin-bottom: 15px;
+        border-radius: 4px;
+        word-break: break-word;
+    }
+
+    /* Links Section */
+    .links-section {
+        margin-top: 15px;
+        border-top: 1px solid var(--color-border); /* Black separator line */
+        padding-top: 10px;
+        width: 100%;
+    }
+    .links-section strong {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 13px;
+        color: var(--color-black);
+        font-weight: normal;
+    }
+    .links-section a { 
+      color: var(--color-primary); /* Links are Green */
+      background-color: var(--color-white);
+      text-decoration: none; 
+      cursor: pointer;
+      display: block;
+      padding: 5px 0;
+      font-weight: 500;
+    }
+    .links-section a:hover {
+      text-decoration: underline;
+      color: var(--color-black); /* Hover color is Black */
+    }
+
+    /* Fallback and ID Results */
+    .fallback-result {
+        font-style: italic;
+        color: var(--color-black);
+        opacity: 0.8;
+        font-size: 13px;
+        margin-top: 5px;
+    }
+  </style>
+  <script src="popup.js"></script>
+</head>
+<body>
+  <h4>Shopify Theme Finder</h4>
+  <div id="theme-result" class="loading">Analyzing page...</div>
+</body>
+</html>

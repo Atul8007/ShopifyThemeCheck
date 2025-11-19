@@ -75,14 +75,25 @@ function createLinkElement(text, url) {
 
 // Main logic that runs when the popup opens
 document.addEventListener('DOMContentLoaded', () => {
+    const preloader = document.getElementById('preloader');
+    const content = document.getElementById('content');
     const resultDiv = document.getElementById('theme-result');
-    resultDiv.innerHTML = 'Analyzing page...';
-    resultDiv.classList.add('loading');
+
+    // Helper to show content and hide preloader
+    const showContent = () => {
+        if (preloader) preloader.style.display = 'none';
+        if (content) {
+            content.classList.remove('hidden');
+            // Trigger reflow to enable transition
+            void content.offsetWidth;
+            content.classList.add('visible');
+        }
+    };
 
     // 1. Get the current active tab
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
         const activeTab = tabs[0];
-        const isShopifyUrl = activeTab.url.includes('.myshopify.com');
+        const isShopifyUrl = activeTab.url.includes('.myshopify.com') || activeTab.url.includes('myshopify.com');
 
         // 2. Execute the detection function in the active page's context
         chrome.scripting.executeScript({
@@ -90,64 +101,89 @@ document.addEventListener('DOMContentLoaded', () => {
             function: getShopifyThemeSchemaName
         }, (injectionResults) => {
 
-            if (chrome.runtime.lastError) {
-                resultDiv.textContent = 'Error: Check permissions or refresh page.';
-                resultDiv.classList.add('not-shopify');
-                resultDiv.classList.remove('loading');
-                return;
-            }
+            // Simulate a small delay for the preloader to be visible (UX)
+            setTimeout(() => {
+                if (chrome.runtime.lastError) {
+                    resultDiv.innerHTML = `
+                        <div class="status-message status-error">
+                            <strong>Connection Error</strong><br>
+                            Please refresh the page and try again.
+                        </div>
+                    `;
+                    showContent();
+                    return;
+                }
 
-            const themeResult = injectionResults[0].result;
-            resultDiv.innerHTML = '';
-            resultDiv.classList.remove('loading');
+                const themeResult = injectionResults[0].result;
+                resultDiv.innerHTML = '';
 
-            if (themeResult.type === "not_found") {
-                resultDiv.textContent = isShopifyUrl ?
-                    'Shopify store detected, but theme details are obscured.' :
-                    'This does not appear to be a Shopify store.';
-                resultDiv.classList.add('not-shopify');
-            }
-            else if (themeResult.type === 'id' || themeResult.type === 'fallback_name') {
-                // Display fallbacks
-                resultDiv.innerHTML = `
-                    <div class="theme-name-display" style="background-color: #ffffff; color: #000000; border: 1px solid #000000; padding: 5px 8px;">
-                        ${themeResult.name}
-                    </div>
-                    <div class="fallback-result">Theme name found via fallback method. Direct links may be inaccurate.</div>
-                `;
-                resultDiv.classList.add('found');
-            }
-            else { // themeResult.type === 'schema'
-                resultDiv.classList.add('found');
-                const cleanThemeName = themeResult.name;
-                const themeSlug = createSlug(cleanThemeName);
+                if (themeResult.type === "not_found") {
+                    resultDiv.innerHTML = `
+                        <div class="status-message status-info">
+                            ${isShopifyUrl ? 'Shopify store detected, but the theme is hidden.' : 'This page does not appear to be a Shopify store.'}
+                        </div>
+                    `;
+                }
+                else {
+                    // Success case (Schema, ID, or Fallback)
+                    const cleanThemeName = themeResult.name;
+                    const themeSlug = createSlug(cleanThemeName);
+                    const isFallback = themeResult.type === 'id' || themeResult.type === 'fallback_name';
 
-                // --- UI Construction ---
-                const themeNameDisplay = document.createElement('div');
-                themeNameDisplay.className = 'theme-name-display';
-                themeNameDisplay.textContent = cleanThemeName;
-                resultDiv.appendChild(themeNameDisplay);
+                    // Build the Result Card
+                    const card = document.createElement('div');
+                    card.className = 'result-card';
 
-                const linksSection = document.createElement('div');
-                linksSection.className = 'links-section';
+                    const label = document.createElement('div');
+                    label.className = 'theme-label';
+                    label.textContent = isFallback ? 'Detected Theme (Fallback)' : 'Active Theme';
+                    card.appendChild(label);
 
-                const linksTitle = document.createElement('strong');
-                linksTitle.textContent = 'Search on:';
-                linksSection.appendChild(linksTitle);
+                    const name = document.createElement('div');
+                    name.className = 'theme-name';
+                    name.textContent = cleanThemeName;
+                    card.appendChild(name);
 
-                // Shopify Theme Store Link
-                const shopifyUrl = `https://themes.shopify.com/themes/${themeSlug}`;
-                const shopifyLink = createLinkElement(`Official Shopify Store`, shopifyUrl);
-                linksSection.appendChild(shopifyLink);
+                    // Buttons
+                    // Shopify Theme Store Link
+                    const shopifyUrl = `https://themes.shopify.com/themes/${themeSlug}`;
+                    const shopifyBtn = document.createElement('a');
+                    shopifyBtn.className = 'btn btn-primary';
+                    shopifyBtn.href = shopifyUrl;
+                    shopifyBtn.textContent = 'View on Shopify Store';
+                    shopifyBtn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        chrome.tabs.create({ url: shopifyUrl, active: true });
+                    });
+                    card.appendChild(shopifyBtn);
 
-                // ThemeForest Search Link
-                const themeForestSearchTerm = encodeURIComponent(cleanThemeName);
-                const themeforestUrl = `https://themeforest.net/category/ecommerce/shopify?term=${themeForestSearchTerm}`;
-                const themeforestLink = createLinkElement(`ThemeForest Marketplace`, themeforestUrl);
-                linksSection.appendChild(themeforestLink);
+                    // ThemeForest Search Link
+                    const themeForestSearchTerm = encodeURIComponent(cleanThemeName);
+                    const themeforestUrl = `https://themeforest.net/category/ecommerce/shopify?term=${themeForestSearchTerm}`;
+                    const themeforestBtn = document.createElement('a');
+                    themeforestBtn.className = 'btn btn-secondary';
+                    themeforestBtn.href = themeforestUrl;
+                    themeforestBtn.textContent = 'Search on ThemeForest';
+                    themeforestBtn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        chrome.tabs.create({ url: themeforestUrl, active: true });
+                    });
+                    card.appendChild(themeforestBtn);
 
-                resultDiv.appendChild(linksSection);
-            }
+                    if (isFallback) {
+                        const note = document.createElement('div');
+                        note.style.fontSize = '11px';
+                        note.style.color = '#6b7280';
+                        note.style.marginTop = '10px';
+                        note.textContent = '* Exact match not guaranteed via fallback method.';
+                        card.appendChild(note);
+                    }
+
+                    resultDiv.appendChild(card);
+                }
+
+                showContent();
+            }, 600); // 600ms delay for smooth animation
         });
     });
 });

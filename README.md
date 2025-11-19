@@ -80,6 +80,10 @@ ShopifyThemeCheck/
 3. Parses schema_name, theme ID, fallbacks  
 4. Displays the result inside the popup  
 
+## 📜 Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for a history of changes to this project.
+
 ## 🚀 Future Enhancements
 
 - Theme Asset Inspector  
@@ -90,7 +94,7 @@ ShopifyThemeCheck/
 
 ## 🤝 Contributing
 
-Contributions are welcome!
+Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct, and the process for submitting pull requests to us.
 
 ## 📄 License
 

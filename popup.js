@@ -1,6 +1,11 @@
-// Function to run in the context of the active webpage (Content Script)
+/**
+ * Extracts the Shopify theme schema name from the active webpage.
+ * Tries multiple methods to find the theme name or ID.
+ * 
+ * @returns {{type: string, name: string}} An object containing the result type and name/ID.
+ */
 function getShopifyThemeSchemaName() {
-    
+
     // --- 1. Primary Check: Extract 'schema_name' from Shopify.theme object ---
     let scripts = document.querySelectorAll('script');
     for (const script of scripts) {
@@ -21,7 +26,7 @@ function getShopifyThemeSchemaName() {
             }
         }
     }
-    
+
     // --- 3. Fallback Check: Check for Meta Tag Theme ID ---
     let metaThemeId = document.querySelector('meta[name="shopify-theme-id"]');
     if (metaThemeId) {
@@ -32,26 +37,37 @@ function getShopifyThemeSchemaName() {
     return { type: 'not_found', name: 'Theme details not found.' };
 }
 
-// Function to convert Theme Name into a URL-friendly slug
+/**
+ * Converts a text string into a URL-friendly slug.
+ * 
+ * @param {string} text - The text to convert.
+ * @returns {string} The URL-friendly slug.
+ */
 function createSlug(text) {
     if (!text) return '';
     const cleanText = text.includes('/') ? text.split('/').pop() : text;
 
     return cleanText.toLowerCase()
-        .replace(/[^a-z0-9\s-]/g, "") 
+        .replace(/[^a-z0-9\s-]/g, "")
         .trim()
-        .replace(/\s+/g, '-') 
-        .replace(/-+/g, '-'); 
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-');
 }
 
-// Function to create a clickable link element (now simpler as styling is in CSS)
+/**
+ * Creates a clickable link element.
+ * 
+ * @param {string} text - The link text.
+ * @param {string} url - The URL to link to.
+ * @returns {HTMLAnchorElement} The created anchor element.
+ */
 function createLinkElement(text, url) {
     const link = document.createElement('a');
     link.href = url;
     link.textContent = text;
     // We'll handle opening in new tab via event listener to respect CSP
     link.addEventListener('click', (event) => {
-        event.preventDefault(); 
+        event.preventDefault();
         chrome.tabs.create({ url: url, active: true });
     });
     return link;
@@ -73,7 +89,7 @@ document.addEventListener('DOMContentLoaded', () => {
             target: { tabId: activeTab.id },
             function: getShopifyThemeSchemaName
         }, (injectionResults) => {
-            
+
             if (chrome.runtime.lastError) {
                 resultDiv.textContent = 'Error: Check permissions or refresh page.';
                 resultDiv.classList.add('not-shopify');
@@ -81,16 +97,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            const themeResult = injectionResults[0].result; 
-            resultDiv.innerHTML = ''; 
+            const themeResult = injectionResults[0].result;
+            resultDiv.innerHTML = '';
             resultDiv.classList.remove('loading');
 
             if (themeResult.type === "not_found") {
-                resultDiv.textContent = isShopifyUrl ? 
-                    'Shopify store detected, but theme details are obscured.' : 
+                resultDiv.textContent = isShopifyUrl ?
+                    'Shopify store detected, but theme details are obscured.' :
                     'This does not appear to be a Shopify store.';
                 resultDiv.classList.add('not-shopify');
-            } 
+            }
             else if (themeResult.type === 'id' || themeResult.type === 'fallback_name') {
                 // Display fallbacks
                 resultDiv.innerHTML = `
@@ -100,7 +116,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="fallback-result">Theme name found via fallback method. Direct links may be inaccurate.</div>
                 `;
                 resultDiv.classList.add('found');
-            } 
+            }
             else { // themeResult.type === 'schema'
                 resultDiv.classList.add('found');
                 const cleanThemeName = themeResult.name;
@@ -114,7 +130,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const linksSection = document.createElement('div');
                 linksSection.className = 'links-section';
-                
+
                 const linksTitle = document.createElement('strong');
                 linksTitle.textContent = 'Search on:';
                 linksSection.appendChild(linksTitle);
@@ -123,7 +139,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const shopifyUrl = `https://themes.shopify.com/themes/${themeSlug}`;
                 const shopifyLink = createLinkElement(`Official Shopify Store`, shopifyUrl);
                 linksSection.appendChild(shopifyLink);
-                
+
                 // ThemeForest Search Link
                 const themeForestSearchTerm = encodeURIComponent(cleanThemeName);
                 const themeforestUrl = `https://themeforest.net/category/ecommerce/shopify?term=${themeForestSearchTerm}`;
